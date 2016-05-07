@@ -1,0 +1,16 @@
+{
+	"rules": {
+		"strict": 0,
+		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
+		"wrap-iife": ["error", "inside"],
+		"new-cap": [2, {
+  		"capIsNewExceptions": ["Immutable.Map", "Immutable.Set", "Immutable.List", "Immutable.Record"]
+		}],
+		"indent": ["error", "tab"],
+		"comma-style": ["error", "first", { "exceptions": { "VariableDeclaration": true } }],
+		"comma-dangle": ["error", "never"],
+    "max-len": ["error", 80, 4],
+		"array-bracket-spacing": ["error", "always", { "singleValue": false, "objectsInArrays": false }]
+	},
+	extends: "airbnb"
+}
