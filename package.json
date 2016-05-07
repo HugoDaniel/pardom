@@ -1,0 +1,33 @@
+{
+  "name": "pardom",
+  "version": "0.0.0",
+  "description": "Simple framework to help you schedule WebWorker's messages in requestAnimationFrame",
+  "scripts": {
+    "lint": "eslint . --ext .js",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && webpack",
+    "dist": "npm run build -- --config webpack.config.production.js",
+    "flow": "flow; test $? -eq 0 -o $? -eq 2",
+    "test": "nyc --require babel-core/register mocha --compilers js:babel-register --recursive",
+    "test:watch": "npm test -- --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HugoDaniel/pardom.git"
+  },
+  "keywords": [
+    "parallel",
+    "dom",
+    "webworker",
+    "framework",
+    "minimal"
+  ],
+  "license": "WTFPL",
+  "bugs": {
+    "url": "https://github.com/HugoDaniel/pardom/issues"
+  },
+  "devDependencies": {
+    "expect": "^1.19.0",
+    "mocha": "^2.4.5"
+  }
+}
