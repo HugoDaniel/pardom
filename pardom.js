@@ -51,10 +51,16 @@
 		if (isFrameNeeded) {
 			(function frameIIFE() {
 				function frame() {
-					const msgType = pardom.scheduled.pop();
+					// get the olders message type that was scheduled 
+					const msgType = pardom.scheduled.shift();
+					// if there are more message types scheduled 
+					// request a new frame as soon as possible
 					if (pardom.scheduled.length > 0) raf(frame);
+					// get the list of actions scheduled
+					// and the functions that are mapped to them
 					const msgLst = pardom.actions.get(msgType);
 					const functions = pardom.handlers.get(msgType);
+					// execute each of them
 					do {
 						const curMsg = msgLst.pop();
 						// get the function handler and call it
