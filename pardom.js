@@ -9,13 +9,9 @@
 (function pardomIIFE(win) {
 	'use strict';
 
-	/**
-	 * Normalized rAF
-	 *
-	 * @type {Function}
-	 */
-	const raf = win.requestAnimationFrame;
-
+	var raf = win.requestAnimationFrame;
+	// ^ the default timer is always the "requestAnimationFrame"
+	// present in the argument 
 	/**
 	 * Initialize a `ParDom`.
 	 *
@@ -77,6 +73,8 @@
 	ParDom.prototype =
 	{ constructor: ParDom
 	, registerWorker: function _registerWorker(w, initMsg) {
+		if(!w) return this.workers;
+		// ^ assert that the worker exists
 		const worker = w;
 		this.workers.push(worker);
 		worker.onmessage = e => {
@@ -93,6 +91,7 @@
 		return this.workers;
 	  }
 	, registerMsg: function _registerMsg(msgType, msg, f) {
+		if(!msgType || !msg || !f) return this.handlers;
 		// initialize the handler object for this type of messages
 		if (!this.handlers.has(msgType)) {
 			this.handlers.set(msgType, new Map());
@@ -111,5 +110,8 @@
 
 	// There should never be more than
 	// one instance of `ParDom` in an app
-	window.pardom = (win.pardom || new ParDom());
+	var exports = win.pardom = (win.pardom || new ParDom());
+	// Expose to CJS & AMD
+	if ((typeof define)[0] == 'f') define(function() { return exports; });
+	else if ((typeof module)[0] == 'o') module.exports = exports;
 })(this);
