@@ -8,7 +8,7 @@
     "build": "npm run clean && webpack",
     "dist": "npm run build -- --config webpack.config.production.js",
     "flow": "flow; test $? -eq 0 -o $? -eq 2",
-    "test": "nyc --require babel-core/register mocha --compilers js:babel-register --recursive",
+    "test": "mocha --recursive",
     "test:watch": "npm test -- --watch"
   },
   "repository": {
@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "expect": "^1.19.0",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "webworker-threads": "^0.7.4"
   }
 }
