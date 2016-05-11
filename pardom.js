@@ -51,7 +51,7 @@
 		if (isFrameNeeded) {
 			(function frameIIFE() {
 				function frame() {
-					// get the olders message type that was scheduled 
+					// get the oldest message type that was scheduled 
 					const msgType = pardom.scheduled.shift();
 					// if there are more message types scheduled 
 					// request a new frame as soon as possible
@@ -66,6 +66,7 @@
 						// get the function handler and call it
 						const f = functions.get(curMsg.action);
 						f(curMsg, pardom.workers);
+						// ^ your code runs here
 					} while (msgLst.length > 0);
 				}
 				raf(frame); // schedule it
