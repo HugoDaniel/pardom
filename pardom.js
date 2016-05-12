@@ -9,9 +9,6 @@
 (function pardomIIFE(win) {
 	'use strict';
 
-	var raf = win.requestAnimationFrame;
-	// ^ the default timer is always the "requestAnimationFrame"
-	// present in the argument 
 	/**
 	 * Initialize a `ParDom`.
 	 *
@@ -28,6 +25,9 @@
 		this.actions = new Map();
 		// ^ the messages to handle in the frame
 		// this is a Map(msgType, [message object])
+		this.timer = win.requestAnimationFrame;
+		// ^ the default timer is the "requestAnimationFrame" set
+		// in the IIFE context
 	}
 
 	function scheduleMessage(pardom, msgObj, w) {
@@ -49,38 +49,50 @@
 				function frame() {
 					// get the oldest message type that was scheduled 
 					const msgType = pardom.scheduled.shift();
+					console.log("RUNNING TYPE", msgType);
 					// if there are more message types scheduled 
 					// request a new frame as soon as possible
-					if (pardom.scheduled.length > 0) raf(frame);
+					if (pardom.scheduled.length > 0) {
+						pardom.timer(frame);
+					}
 					// get the list of actions scheduled
 					// and the functions that are mapped to them
 					const msgLst = pardom.actions.get(msgType);
 					const functions = pardom.handlers.get(msgType);
 					// execute each of them
 					do {
-						const curMsg = msgLst.pop();
+						const curMsg = msgLst.shift();
 						// get the function handler and call it
 						const f = functions.get(curMsg.action);
 						f(curMsg, pardom.workers);
 						// ^ your code runs here
 					} while (msgLst.length > 0);
 				}
-				raf(frame); // schedule it
+				pardom.timer(frame); // schedule it
 			})();
 		}
 	}
 
 	ParDom.prototype =
 	{ constructor: ParDom
+	, isValidMsg: function _isValidMsg(msg) {
+			const msgType = msg.type;
+			const msgAction = msg.action;
+			const hasType = msgType !== null && msgType !== undefined;
+			const hasAction = msgAction !== null && msgAction !== undefined;
+			const handler = this.handlers.get(msgType);
+			const isValid = (hasType && 
+				hasAction && handler && handler.get(msgAction));
+			return isValid;
+	  }
 	, registerWorker: function _registerWorker(w, initMsg) {
 		if(!w) return this.workers;
 		// ^ assert that the worker exists
 		const worker = w;
 		this.workers.push(worker);
 		worker.onmessage = e => {
-			const msgType = e.data.type;
-			if (msgType && this.handlers.has(msgType)) {
-				scheduleMessage(this, e.data, e.currentTarget);
+			if(this.isValidMsg(e.data)) {
+				scheduleMessage(this, e.data, worker);
 			}
 		};
 		// post the initialization message to the worker

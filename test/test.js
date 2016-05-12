@@ -1,9 +1,9 @@
 var expect = require('expect');
-requestAnimationFrame = function(f) {
-	setTimeout(f, 20);
-}
 var pardom = require('../pardom');
 var Worker = require('webworker-threads').Worker;
+pardom.timer = function(f) {
+	setTimeout(f, 16);
+}
 
 // test workers:
 var w1 = new Worker(function () {
@@ -13,15 +13,7 @@ var w1 = new Worker(function () {
 });
 var w2 = new Worker(function() { 
 	this.onmessage = function(event) {
-		console.log('GOT SCHEDULE1');
-		switch(event.data) {
-			case 'SCHEDULE1':
-				console.log('GOT SCHEDULE1');
-				postMessage({ type: 'TYPE_E1', action: 'A1' });
-			break;
-			default:
-				postMessage(event.data);
-		}
+		postMessage(event.data);
 		self.close();
   };
 });
@@ -31,6 +23,77 @@ var w3 = new Worker(function() {
 		self.close();
   };
 });
+// test workers for the scheduler tests:
+var w4 = new Worker(function() {
+	this.onmessage = function(event) {
+		var obj1 = { type: 'TYPE_E1', action: 'A1' };
+		switch(event.data) {
+			case 'SCHEDULE1':
+				postMessage(obj1);
+			break;
+		}
+		self.close();
+  };
+});
+var w5 = new Worker(function() {
+	this.onmessage = function(event) {
+		var obj2a = { type: 'TYPE_E2', action: 'A' };
+		var obj2b = { type: 'TYPE_E2', action: 'B' };
+		var obj2c = { type: 'TYPE_E2', action: 'C' };
+		if(event.data === 'SCHEDULE2') {
+				postMessage(obj2a);
+				postMessage(obj2b);
+				postMessage(obj2c);
+		}
+		self.close();
+  };
+});
+var w6 = new Worker(function() {
+	this.onmessage = function(event) {
+		var objMsg = { type: 'TYPE_I', action: 'DONT_IGNORE' };
+		var objIgnore = { type: 'TYPE_I', action: 'IGNORE' };
+		var objFinish = { type: 'TYPE_I', action: 'FINISH' };
+		if(event.data === 'SCHEDULE_IGNORE') {
+				postMessage(objMsg);
+				postMessage(objIgnore);
+				postMessage(objFinish);
+		}
+		self.close();
+  };
+});
+var w7 = new Worker(function() {
+	this.onmessage = function(event) {
+		var a = { type: 'TYPE_T1', action: 'A' };
+		var b = { type: 'TYPE_T2', action: 'B' };
+		var c = { type: 'TYPE_T1', action: 'C' };
+		if(event.data === 'SCHEDULE_TYPES') {
+				postMessage(a);
+				postMessage(b);
+				postMessage(c);
+		}
+		self.close();
+  };
+});
+
+var w9 = new Worker(function() {
+	this.onmessage = function(event) {
+		var a = { type: 'TYPE_O3', action: 'A' };
+		var b = { type: 'TYPE_O2', action: 'B' };
+		var c = { type: 'TYPE_O1', action: 'C' };
+		var d = { type: 'TYPE_O3', action: 'D' };
+		if(event.data === 'SCHEDULE_ORDER') {
+// while messages from type O3 are being processed, send O2 and O1 and expect
+// them to be run in the order they were defined: O1 before O2
+				postMessage(a);
+				postMessage(b);
+				postMessage(c);
+				postMessage(d);
+		}
+		self.close();
+  };
+});
+
+// Tests start here
 describe('ParDom', function() {
 	describe('#registerWorker()', function () {
 		it('registers a worker successfully', function () {
@@ -145,30 +208,143 @@ describe('ParDom', function() {
 			var runTestMsg = 'SCHEDULE1';
 			var tmsg1 = 'TYPE_E1';
 			var action1 = 'A1';
+			pardom.registerWorker(w4, runTestMsg);
 			pardom.registerMsg(tmsg1, action1, function(msg) {
-				console.log("EXECUTING");
-				// msg.w.postMessage('EXECUTED' + action1);
+				done();
+				// ^ message got executed
 			});
-			// assuming w2 is already registered from the #registerWorker tests
-/*
-			w2.thread.once('message', function(msg) {
-				console.log("GOT MESSAGE!!", msg);
+		});
+
+		it('can execute different messages of the same type', function (done) {
+			var runTestMsg = 'SCHEDULE2';
+			var tmsg = 'TYPE_E2';
+			var actionA = 'A';
+			var actionB = 'B';
+			var actionC = 'C';
+			var hasRunActionA = false;
+			var hasRunActionB = false;
+			pardom.registerMsg(tmsg, actionA, function(msg) {
+				expect(hasRunActionB).toBe(false,
+				'Actions must be executed in the same order they were issued: ' + 
+				'Running ACTION A after ACTION B');
+				hasRunActionA = true;
+			});
+			pardom.registerMsg(tmsg, actionB, function(msg) {
+				hasRunActionB = true;
+				expect(hasRunActionA).toBe(true, 
+				'Actions must be executed in the same order they were issued: ' + 
+				'Running ACTION B before ACTION A');
+			});
+			pardom.registerMsg(tmsg, actionC, function(msg) {
+				var baseMsg = 'Actions must be executed in the same order they were issued: ';
+				expect(hasRunActionA).toBe(true, baseMsg +
+				'Running ACTION C before ACTION A');
+				expect(hasRunActionB).toBe(true, baseMsg +
+				'Running ACTION C before ACTION B');
 				done();
 			});
-*/
-			w2.postMessage(runTestMsg);
+			pardom.registerWorker(w5, runTestMsg);
 		});
 
-		it('can execute a two messages of the same type', function (done) {
-			done();
+		it('ignores messages that are not registered', function (done) {
+			var runTestMsg = 'SCHEDULE_IGNORE';
+			var tmsg = 'TYPE_I';
+			var action = 'DONT_IGNORE';
+			var finish = 'FINISH';
+			var hasRunAction = false;
+			pardom.registerMsg(tmsg, action, function(msg) {
+				hasRunAction = true;
+			});
+			pardom.registerMsg(tmsg, finish, function(msg) {
+				expect(hasRunAction).toBe(true, 
+				'Executing the last action out of order. ' + 
+				'The first action must be executed before this one.');
+				done();
+			});
+			pardom.registerWorker(w6, runTestMsg);
+		});
+		it('executes messages of different types in their own batch', function (done) {
+			var runTestMsg = 'SCHEDULE_TYPES';
+			var tmsg1 = 'TYPE_T1';
+			var tmsg2 = 'TYPE_T2';
+			var actionA = 'A';
+			var actionB = 'B';
+			var actionC = 'C';
+			var hasRunA = false;
+			var hasRunB = false;
+			var hasRunC = false;
+			pardom.registerMsg(tmsg1, actionA, function(msg) {
+				hasRunA = true;
+				expect(hasRunB || hasRunC).toBe(false, 
+				'Executing the action A out of order. ' + 
+				'Action A must be executed before every other action.');
+			});
+			pardom.registerMsg(tmsg1, actionC, function(msg) {
+				hasRunC = true;
+				expect(hasRunA).toBe(true, 
+				'Executing the C action out of order. ' + 
+				'Action A must be executed before this one.');
+				expect(hasRunB).toBe(false, 
+				'Executing the C action out of order. ' + 
+				'Action B must be executed after this one.');
+			});
+			pardom.registerMsg(tmsg2, actionB, function(msg) {
+				hasRunB = true;
+				expect(hasRunA && hasRunC).toBe(true, 
+				'Executing the B action out of order. ' + 
+				'Actions A and C must be executed before this one.' + 
+				'Their type was registered before ' + tmsg2);
+				done();
+			});
+			pardom.registerWorker(w7, runTestMsg);
 		});
 
-		it('can execute a two messages of different types', function (done) {
-			done();
-		});
-
-		it('executes messages in the order that the types were defined', function (done) {
-			done();
+		it('executes messages in the order that the types were sent', function (done) {
+			var runTestMsg = 'SCHEDULE_ORDER';
+			var tmsg1 = 'TYPE_O1';
+			var tmsg2 = 'TYPE_O2';
+			var tmsg3 = 'TYPE_O3';
+			var actionA = 'A';
+			var actionB = 'B';
+			var actionC = 'C';
+			var actionD = 'D';
+			var hasRunA = false;
+			var hasRunB = false;
+			var hasRunC = false;
+			var hasRunD = false;
+			// check the code of w9
+			pardom.registerMsg(tmsg1, actionC, function(msg) {
+				hasRunC = true;
+				expect(hasRunA && hasRunD && hasRunC).toBe(true,
+				'Executing the action C out of order. ' +
+				'Action C must be the last executed action.');
+				done();
+			});
+			pardom.registerMsg(tmsg2, actionB, function(msg) {
+				hasRunB = true;
+				expect(hasRunA && hasRunD).toBe(true,
+				'Executing the action B out of order. ' +
+				'Action B must be executed after A and D.');
+				expect(hasRunC).toBe(false,
+				'Execuuting action B out of order. ' + 
+				'Action B must be executed before C.');
+			});
+			pardom.registerMsg(tmsg3, actionA, function(msg) {
+				hasRunA = true;
+				expect(hasRunB || hasRunD || hasRunC).toBe(false,
+				'Executing the action A out of order. ' +
+				'Action A must be the first executed action.');
+			});
+			pardom.registerMsg(tmsg3, actionD, function(msg) {
+				hasRunD = true;
+				expect(hasRunA).toBe(true,
+				'Executing the action D out of order. ' +
+				'Action D must be executed after action A.');
+				expect(hasRunB || hasRunC).toBe(false,
+				'Executing the action D out of order. ' +
+				'Action D must be executed before action B and action C.');
+			});
+			pardom.registerWorker(w9, runTestMsg);
 		});
 	});
 });
