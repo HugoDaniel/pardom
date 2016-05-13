@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head><meta charset="UTF-8" /><title>PARDOM</title></head>
+	<body>
+		<button id="clickme">Click me</button>
+		<p id="hello">
+		</p>
+		<script src="dist/pardom.js"></script>
+<script>
+	var w = new Worker('worker.js');
+	console.log(pardom, "PARDOM", pardom);
+	var workers = pardom.registerWorker(w);
+	pardom.registerMsg("MEH", "YESSIR", function(msg) {
+		msg.w.postMessage("MEH");
+	});
+
+	var msgs = pardom.registerMsg("BAM", "YESSIR", function(msg) {
+		msg.w.postMessage("BAM");
+	});
+
+	pardom.registerMsg("FOO", "BAR", function(msg) {
+		msg.w.postMessage("FOO");
+	});
+	console.log("REGISTERD MESSAGES", msgs);
+</script>
+	</body>
+</html>
