@@ -28,11 +28,9 @@ So whats the catch ?
 	* No Edge support (it might work though)
 * No sugar added, just plain JavaScript code
 
+
 ParDom
 ======
 
 A simple JavaScript message scheduler.
-
-
-
 
