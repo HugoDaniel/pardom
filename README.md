@@ -1,7 +1,8 @@
 ParDom
 ======
 
-With ParDom you can:
+With ParDom you can
+-------------------
 
 * Create JS apps that are super fast and light on the memory
 * Easily manage your code as it grows without compromising performance
