@@ -1,11 +1,5 @@
-/**
- * ParDom
- *
- * An extensible WebWorkers message scheduler
- * based on requestAnimationFrame.
- *
- * @author Hugo Gomes <mr.hugo.gomes@gmail.com>
- */
+// Welcome
+// For high-level documentation please see the pardom.js.flow file
 (function pardomIIFE(win) {
 	'use strict';
 	class ParDom {
@@ -51,14 +45,14 @@
 			// return all registered workers
 			return this.workers;
 	  }
-		registerMsg(msgType, msg, f) {
-			if (!msgType || !msg || !f) return this.handlers;
+		registerMsg(msgType, action, f) {
+			if (!msgType || !action|| !f) return this.handlers;
 			// initialize the handler object for this type of messages
 			if (!this.handlers.has(msgType)) {
 				this.handlers.set(msgType, new Map());
 			}
 			// set the function as the handler for this message
-			this.handlers.get(msgType).set(msg, f);
+			this.handlers.get(msgType).set(action, f);
 			// update the actions map to have an array available
 			// for the incoming message objects from the workers
 			if (!this.actions.has(msgType)) {
