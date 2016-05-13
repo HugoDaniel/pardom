@@ -1,6 +1,6 @@
 {
   "name": "pardom",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple framework to help you schedule WebWorker's messages in requestAnimationFrame",
   "scripts": {
     "lint": "eslint pardom.js",
