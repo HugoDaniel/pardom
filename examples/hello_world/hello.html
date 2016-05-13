@@ -2,26 +2,46 @@
 <html>
 	<head><meta charset="UTF-8" /><title>PARDOM</title></head>
 	<body>
+		<!-- A simple DOM structure: a button and a paragraph -->
 		<button id="clickme">Click me</button>
-		<p id="hello">
-		</p>
-		<script src="dist/pardom.js"></script>
+		<p id="hello"> </p>
+		
+		<!-- include pardom -->
+		<script src="pardom.js"></script>
+		<!-- shared constants between pardom and the workers -->
+		<script src="hello_constants.js"></script>
 <script>
-	var w = new Worker('worker.js');
-	console.log(pardom, "PARDOM", pardom);
-	var workers = pardom.registerWorker(w);
-	pardom.registerMsg("MEH", "YESSIR", function(msg) {
-		msg.w.postMessage("MEH");
-	});
+	// start by creating and registering a worker for our code
+	var w = new Worker('hello.js');
+	pardom.registerWorker(w);
 
-	var msgs = pardom.registerMsg("BAM", "YESSIR", function(msg) {
-		msg.w.postMessage("BAM");
-	});
+	// a cache of dom nodes is always handy to keep around
+	var domNodes = Object.create(null);
 
-	pardom.registerMsg("FOO", "BAR", function(msg) {
-		msg.w.postMessage("FOO");
+	// lets register three messages, one for the initialization,
+	// one for the click event and 
+	// one to put the "Hello World" message on the DOM
+	pardom.registerMsg(DOM_READ_TYPE, READ_INITIAL_STUFF, function(msg) {
+		// fill the cache of dom nodes
+		domNodes.btn = document.getElementById('clickme');
+		domNodes.hello = document.getElementById('hello');
+		// warn the worker that the initialization is done
+		msg.w.postMessage(INIT_DONE);
 	});
-	console.log("REGISTERD MESSAGES", msgs);
+	pardom.registerMsg(REGISTER_EVENT_TYPE, ON_CLICK, function(msg) {
+		if(domNodes.btn) {
+			domNodes.btn.addEventListener('click', function() {
+				// Immediately send a message to the work when the click happens
+				msg.w.postMessage(ON_CLICK);
+			});
+		}
+	});
+	pardom.registerMsg(DOM_WRITE_TYPE, HELLO, function(msg) {
+		if(domNodes.hello) {
+			domNodes.hello.textContent = 'Hello World!';
+		}
+	});
+	// all done here, the rest happens in our worker: hello.js
 </script>
 	</body>
 </html>
