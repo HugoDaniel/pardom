@@ -1,14 +1,20 @@
 {
   "name": "pardom",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Simple framework to help you schedule WebWorker's messages in requestAnimationFrame",
   "scripts": {
     "lint": "eslint pardom.js",
     "clean": "rm -rf dist",
-    "build": "echo TODO",
+    "build": "babel pardom.js -d dist",
     "flow": "flow; test $? -eq 0 -o $? -eq 2",
     "test": "mocha --recursive",
     "test:watch": "npm test -- --watch"
+  },
+  "main": "pardom.js",
+  "homepage": "https://github.com/HugoDaniel/pardom",
+  "author": {
+    "name": "Hugo Daniel",
+    "email": "mr.hugo.gomes@gmail.com"
   },
   "repository": {
     "type": "git",
@@ -26,12 +32,17 @@
     "url": "https://github.com/HugoDaniel/pardom/issues"
   },
   "devDependencies": {
+    "babel-cli": "^6.8.0",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.8.0",
+    "babel-plugin-transform-es2015-block-scoping": "^6.8.0",
     "eslint": "^2.9.0",
     "eslint-config-airbnb-base": "^3.0.1",
     "eslint-plugin-import": "^1.8.0",
     "expect": "^1.19.0",
     "flow-bin": "^0.24.2",
+    "install": "^0.7.3",
     "mocha": "^2.4.5",
+    "npm": "^3.9.0",
     "webworker-threads": "^0.7.4"
   }
 }
