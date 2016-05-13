@@ -3,6 +3,57 @@
 (function pardomIIFE(win) {
 	'use strict';
 
+	var timer = win.requestAnimationFrame ? win.requestAnimationFrame : function _timer(f) {
+		setTimeout(f, 16);
+	};
+	// ^ the default timer is the "requestAnimationFrame" set
+	// in the IIFE context
+	//
+	// scheduleMessage is the function responsible for adding
+	// a message to the queue of messages being executed
+	// it calls timer if there is no call scheduled
+	// timer runs the "frame" function, defined bellow
+	function scheduleMessage(pardom, msgObj, w) {
+		var msg = msgObj;
+		var isFrameNeeded = false;
+		// are the messages of this type not scheduled to run ?
+		if (pardom.scheduled.indexOf(msg.type) === -1) {
+			// is it necessary to schedule a frame ?
+			isFrameNeeded = pardom.scheduled.length === 0;
+			pardom.scheduled.push(msg.type);
+		}
+		// set the origin worker (this can be used if a response is needed)
+		msg.w = w;
+		// push the message into the queue to be processed
+		pardom.actions.get(msg.type).push(msg);
+		// the frame() function gets called in rAF to handle the scheduled msgs
+		if (isFrameNeeded) {
+			(function frameIIFE() {
+				function frame() {
+					// get the oldest message type that was scheduled
+					var msgType = pardom.scheduled.shift();
+					// if there are more message types scheduled
+					// request a new frame as soon as possible
+					if (pardom.scheduled.length > 0) {
+						timer(frame);
+					}
+					// get the list of actions scheduled
+					// and the functions that are mapped to them
+					var msgLst = pardom.actions.get(msgType);
+					var functions = pardom.handlers.get(msgType);
+					// execute each of them
+					do {
+						var curMsg = msgLst.shift();
+						// get the function handler and call it
+						var f = functions.get(curMsg.action);
+						f(curMsg, pardom.workers);
+						// ^ your code runs here
+					} while (msgLst.length > 0);
+				}
+				timer(frame); // schedule it
+			})();
+		}
+	}
 	class ParDom {
 		constructor() {
 			this.handlers = new Map();
@@ -15,18 +66,14 @@
 			this.actions = new Map();
 			// ^ the messages to handle in the frame
 			// this is a Map(msgType, [message object])
-			this.timer = win.requestAnimationFrame;
-			// ^ the default timer is the "requestAnimationFrame" set
-			// in the IIFE context
 		}
 		isValidMsg(msg) {
-			var msgType = msg.type,
-			    msgAction = msg.action,
-			    hasType = msgType !== null && msgType !== undefined,
-			    hasAction = msgAction !== null && msgAction !== undefined,
-			    handler = this.handlers.get(msgType),
-			    isValid = hasType && hasAction && handler && handler.get(msgAction);
-
+			var msgType = msg.type;
+			var msgAction = msg.action;
+			var hasType = msgType !== null && msgType !== undefined;
+			var hasAction = msgAction !== null && msgAction !== undefined;
+			var handler = this.handlers.get(msgType);
+			var isValid = hasType && hasAction && handler && handler.get(msgAction);
 			return isValid;
 		}
 		registerWorker(w, initMsg) {
@@ -63,50 +110,6 @@
 			}
 			// return the updated handlers map
 			return this.handlers;
-		}
-	}
-	function scheduleMessage(pardom, msgObj, w) {
-		var msg = msgObj,
-		    isFrameNeeded = false;
-
-		// are the messages of this type not scheduled to run ?
-		if (pardom.scheduled.indexOf(msg.type) === -1) {
-			// is it necessary to schedule a frame ?
-			isFrameNeeded = pardom.scheduled.length === 0;
-			pardom.scheduled.push(msg.type);
-		}
-		// set the origin worker (this can be used if a response is needed)
-		msg.w = w;
-		// push the message into the queue to be processed
-		pardom.actions.get(msg.type).push(msg);
-		// the frame() function gets called in rAF to handle the scheduled msgs
-		if (isFrameNeeded) {
-			(function frameIIFE() {
-				function frame() {
-					// get the oldest message type that was scheduled
-					var msgType = pardom.scheduled.shift();
-					// if there are more message types scheduled
-					// request a new frame as soon as possible
-					if (pardom.scheduled.length > 0) {
-						pardom.timer(frame);
-					}
-					// get the list of actions scheduled
-					// and the functions that are mapped to them
-					var msgLst = pardom.actions.get(msgType),
-					    functions = pardom.handlers.get(msgType);
-
-					// execute each of them
-					do {
-						var curMsg = msgLst.shift(),
-						    f = functions.get(curMsg.action);
-						// get the function handler and call it
-
-						f(curMsg, pardom.workers);
-						// ^ your code runs here
-					} while (msgLst.length > 0);
-				}
-				pardom.timer(frame); // schedule it
-			})();
 		}
 	}
 
