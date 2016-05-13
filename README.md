@@ -23,7 +23,7 @@ So whats the catch ?
 
 * You have to define a communication protocol between the workers and pardom
 	* But I am working on a set of beautiful functions that abstract common use cases
-* Experience required in writing code and defining PDU's
+* Experience in writing code and some knowledge of [PDU's](https://en.wikipedia.org/wiki/Protocol_data_unit) is required
 * Code is written in ES6, support for Safari is done by transpiling away stuff in dist/pardom.js
 	* No Edge support (it might work though)
 * No sugar added, just plain JavaScript code
