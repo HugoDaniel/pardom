@@ -12,5 +12,5 @@
     "max-len": ["error", 80, 4],
 		"array-bracket-spacing": ["error", "always", { "singleValue": false, "objectsInArrays": false }]
 	},
-	extends: "airbnb"
+	extends: "airbnb-base"
 }
