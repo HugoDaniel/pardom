@@ -3,10 +3,9 @@
   "version": "0.0.0",
   "description": "Simple framework to help you schedule WebWorker's messages in requestAnimationFrame",
   "scripts": {
-    "lint": "eslint . --ext .js",
+    "lint": "eslint pardom.js",
     "clean": "rm -rf dist",
-    "build": "npm run clean && webpack",
-    "dist": "npm run build -- --config webpack.config.production.js",
+    "build": "echo TODO",
     "flow": "flow; test $? -eq 0 -o $? -eq 2",
     "test": "mocha --recursive",
     "test:watch": "npm test -- --watch"
@@ -27,6 +26,9 @@
     "url": "https://github.com/HugoDaniel/pardom/issues"
   },
   "devDependencies": {
+    "eslint": "^2.9.0",
+    "eslint-config-airbnb-base": "^3.0.1",
+    "eslint-plugin-import": "^1.8.0",
     "expect": "^1.19.0",
     "flow-bin": "^0.24.2",
     "mocha": "^2.4.5",
