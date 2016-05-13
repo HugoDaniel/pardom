@@ -14,7 +14,7 @@ How does it help you do all that ?
 
 * ParDom serially processes batches of messages sent by WebWorkers ([or similar interfaces](https://github.com/audreyt/node-webworker-threads))
 * You run your code in its own threads
-* Separate and serialize IO in pardom (stuff like DOM reads/writes)
+* Separate the IO and serialize it in pardom (stuff like DOM reads/writes)
 * It uses requestAnimationFrame as the default timer function
 * Plays well with the "Performance" and "Debugger" tools present in modern browsers
 
