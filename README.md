@@ -1,6 +1,15 @@
 ParDom
 ======
 
+With ParDom you can:
+
+* Create JS apps that are super fast and light on the memory
+* Easily manage your code as it grows without compromising performance
+* Push side-effects to the edge and keep the most important parts of your code pure.
+* Commit to battle proven software engineering good practices such as KISS (Keeping It Super Simple), DRY (Don't Repeat Yourself) and YAGNI (You Aren't Gonna Need It).
+
+OLD STUFF (REMOVE/REWRITE THIS, DON'T READ THIS IF YOU ARE NOT ME)
+===============================
 Serialzy Parallel DOM accesses.
 
 An extensible WebWorkers message scheduler based on requestAnimationFrame.
