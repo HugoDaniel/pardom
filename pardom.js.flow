@@ -1,0 +1,82 @@
+// @flow
+
+type Handler = (msg?:string, worker?:any) => void;
+type Handlers = Map<string, Handler>;
+type Message = { type: string, action: string, args: Array<any> };
+type ScheduleFunction = (time?:number) => void;
+type Workers = Array<any>;
+
+/**
+ * ParDom
+ *
+ * An extensible WebWorkers message scheduler
+ * based on requestAnimationFrame.
+ *
+ * @author Hugo Gomes <mr.hugo.gomes@gmail.com>
+ */
+declare class ParDom {
+	/**
+	 * The function to be used to schedule the execution of 
+	 * the next batch of message handlers
+	 * By default this is window.requestAnimationFrame but 
+	 * you can override it with your own function.
+	 *
+	 * @example
+	 * pardom.timer = function(f) { setTimout(f, 16); }
+	 */
+	timer(f: ScheduleFunction):void,
+
+	/**
+	 * Registers a WebWorker in pardom. What this means is that
+	 * pardom will listen to messages from the worker and schedule
+	 * the execution of the corresponding function if it is a registered
+	 * message.
+	 * After the worker is successfully registered pardom sends it the
+	 * message 'PARDOM'. Use this to perform some sort of initialization
+	 * if needed. You can also specify your own initialization message 
+	 * when registering the worker. Use the second argument for this.
+	 *
+	 * @example
+	 * var w = new Worker('mycode.js');
+	 * pardom.registerWorker(w);
+	 * @returns {Array} An array with all the registered workers
+	 */
+	registerWorker(w:any, initMsg?:string): Workers,
+
+	/**
+	 * Registers a new message in pardom. You have to specify the 
+	 * message type, the action string and the function to execute when
+	 * the message is received from a registered worker.
+	 * All messages of the same type get executed in the same timer call.
+	 * They get executed in the same order that they arrived at pardom.
+	 * 
+	 * @example
+	 * pardom.registerMsg('ReadDOM', 'getCanvasWidth', function(msg) {
+	 *   var width = document.getElementById('canvas').clientWidth;
+	 *   msg.w.postMessage( { resultFor: 'getCanvasWith', value: width } );
+	 * });
+	 * @returns {Map} The Map of all registered messages and their actions
+	 */
+	registerMsg(msgType: string, action:string, f:Handler): Handlers,
+
+	/*
+	 * Next is some stuff that pardom uses to keep track of everything.
+	 * You should not be using these bellow
+	 */
+
+	/**
+	 * Checks if a received message object has the necessary attributes
+	 * See the type "Message" declared above
+	 */
+	isValidMsg(msg:Message):bool,
+	/** The Map of all registered messages */
+	handlers: Handlers,
+	/** The Map of all registered workers */
+	workers: Workers,
+	/** An Array of the unprocessed message types */
+	scheduled: Array<string>,
+	/** A Map with all the message actions to execute in the 
+	 * next timer call for a given message type
+	 */
+	actions: Map<string, Array<Message>>,
+}
