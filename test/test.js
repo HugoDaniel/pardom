@@ -1,9 +1,6 @@
 var expect = require('expect');
 var pardom = require('../pardom');
 var Worker = require('webworker-threads').Worker;
-pardom.timer = function(f) {
-	setTimeout(f, 16);
-}
 
 // test workers:
 var w1 = new Worker(function () {
