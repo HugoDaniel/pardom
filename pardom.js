@@ -47,10 +47,9 @@
 		if (isFrameNeeded) {
 			(function frameIIFE() {
 				function frame() {
-					// get the oldest message type that was scheduled 
+					// get the oldest message type that was scheduled
 					const msgType = pardom.scheduled.shift();
-					console.log("RUNNING TYPE", msgType);
-					// if there are more message types scheduled 
+					// if there are more message types scheduled
 					// request a new frame as soon as possible
 					if (pardom.scheduled.length > 0) {
 						pardom.timer(frame);
@@ -76,22 +75,22 @@
 	ParDom.prototype =
 	{ constructor: ParDom
 	, isValidMsg: function _isValidMsg(msg) {
-			const msgType = msg.type;
-			const msgAction = msg.action;
-			const hasType = msgType !== null && msgType !== undefined;
-			const hasAction = msgAction !== null && msgAction !== undefined;
-			const handler = this.handlers.get(msgType);
-			const isValid = (hasType && 
-				hasAction && handler && handler.get(msgAction));
-			return isValid;
+		const msgType = msg.type;
+		const msgAction = msg.action;
+		const hasType = msgType !== null && msgType !== undefined;
+		const hasAction = msgAction !== null && msgAction !== undefined;
+		const handler = this.handlers.get(msgType);
+		const isValid = (hasType &&
+			hasAction && handler && handler.get(msgAction));
+		return isValid;
 	  }
 	, registerWorker: function _registerWorker(w, initMsg) {
-		if(!w) return this.workers;
+		if (!w) return this.workers;
 		// ^ assert that the worker exists
 		const worker = w;
 		this.workers.push(worker);
 		worker.onmessage = e => {
-			if(this.isValidMsg(e.data)) {
+			if (this.isValidMsg(e.data)) {
 				scheduleMessage(this, e.data, worker);
 			}
 		};
@@ -103,7 +102,7 @@
 		return this.workers;
 	  }
 	, registerMsg: function _registerMsg(msgType, msg, f) {
-		if(!msgType || !msg || !f) return this.handlers;
+		if (!msgType || !msg || !f) return this.handlers;
 		// initialize the handler object for this type of messages
 		if (!this.handlers.has(msgType)) {
 			this.handlers.set(msgType, new Map());
@@ -122,8 +121,11 @@
 
 	// There should never be more than
 	// one instance of `ParDom` in an app
-	var exports = win.pardom = (win.pardom || new ParDom());
+	win.pardom = (win.pardom || new ParDom()); // eslint-disable-line
 	// Expose to CJS & AMD
-	if ((typeof define)[0] == 'f') define(function() { return exports; });
-	else if ((typeof module)[0] == 'o') module.exports = exports;
+	const exports = win.pardom;
+	if ((typeof define)[0] == 'f') { // eslint-disable-line
+		define(function() { return exports; }); // eslint-disable-line
+	} else if ((typeof module)[0] == 'o') // eslint-disable-line
+		module.exports = exports;
 })(this);
