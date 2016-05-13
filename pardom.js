@@ -8,28 +8,66 @@
  */
 (function pardomIIFE(win) {
 	'use strict';
-
-	/**
-	 * Initialize a `ParDom`.
-	 *
-	 * @constructor
-	 */
-	function ParDom() {
-		this.handlers = new Map();
-		// ^ a handler for each message type
-		// this is a Map(msgType, Map(message, function))
-		this.workers = [];
-		// ^ all the registered workers
-		this.scheduled = [];
-		// ^ the scheduled frames (an array of message types)
-		this.actions = new Map();
-		// ^ the messages to handle in the frame
-		// this is a Map(msgType, [message object])
-		this.timer = win.requestAnimationFrame;
-		// ^ the default timer is the "requestAnimationFrame" set
-		// in the IIFE context
+	class ParDom {
+		constructor() {
+			this.handlers = new Map();
+			// ^ a handler for each message type
+			// this is a Map(msgType, Map(message, function))
+			this.workers = [];
+			// ^ all the registered workers
+			this.scheduled = [];
+			// ^ the scheduled frames (an array of message types)
+			this.actions = new Map();
+			// ^ the messages to handle in the frame
+			// this is a Map(msgType, [message object])
+			this.timer = win.requestAnimationFrame;
+			// ^ the default timer is the "requestAnimationFrame" set
+			// in the IIFE context
+		}
+		isValidMsg(msg) {
+			const msgType = msg.type;
+			const msgAction = msg.action;
+			const hasType = msgType !== null && msgType !== undefined;
+			const hasAction = msgAction !== null && msgAction !== undefined;
+			const handler = this.handlers.get(msgType);
+			const isValid = (hasType &&
+				hasAction && handler && handler.get(msgAction));
+			return isValid;
+		}
+		registerWorker(w, initMsg) {
+			if (!w) return this.workers;
+			// ^ assert that the worker exists
+			const worker = w;
+			this.workers.push(worker);
+			worker.onmessage = e => {
+				if (this.isValidMsg(e.data)) {
+					scheduleMessage(this, e.data, worker);
+				}
+			};
+			// post the initialization message to the worker
+			let msg = initMsg;
+			if (!msg) msg = 'PARDOM';
+			worker.postMessage(msg);
+			// return all registered workers
+			return this.workers;
+	  }
+		registerMsg(msgType, msg, f) {
+			if (!msgType || !msg || !f) return this.handlers;
+			// initialize the handler object for this type of messages
+			if (!this.handlers.has(msgType)) {
+				this.handlers.set(msgType, new Map());
+			}
+			// set the function as the handler for this message
+			this.handlers.get(msgType).set(msg, f);
+			// update the actions map to have an array available
+			// for the incoming message objects from the workers
+			if (!this.actions.has(msgType)) {
+				this.actions.set(msgType, []);
+			}
+			// return the updated handlers map
+			return this.handlers;
+	  }
 	}
-
 	function scheduleMessage(pardom, msgObj, w) {
 		const msg = msgObj;
 		let isFrameNeeded = false;
@@ -71,53 +109,6 @@
 			})();
 		}
 	}
-
-	ParDom.prototype =
-	{ constructor: ParDom
-	, isValidMsg: function _isValidMsg(msg) {
-		const msgType = msg.type;
-		const msgAction = msg.action;
-		const hasType = msgType !== null && msgType !== undefined;
-		const hasAction = msgAction !== null && msgAction !== undefined;
-		const handler = this.handlers.get(msgType);
-		const isValid = (hasType &&
-			hasAction && handler && handler.get(msgAction));
-		return isValid;
-	  }
-	, registerWorker: function _registerWorker(w, initMsg) {
-		if (!w) return this.workers;
-		// ^ assert that the worker exists
-		const worker = w;
-		this.workers.push(worker);
-		worker.onmessage = e => {
-			if (this.isValidMsg(e.data)) {
-				scheduleMessage(this, e.data, worker);
-			}
-		};
-		// post the initialization message to the worker
-		let msg = initMsg;
-		if (!msg) msg = 'PARDOM';
-		worker.postMessage(msg);
-		// return all registered workers
-		return this.workers;
-	  }
-	, registerMsg: function _registerMsg(msgType, msg, f) {
-		if (!msgType || !msg || !f) return this.handlers;
-		// initialize the handler object for this type of messages
-		if (!this.handlers.has(msgType)) {
-			this.handlers.set(msgType, new Map());
-		}
-		// set the function as the handler for this message
-		this.handlers.get(msgType).set(msg, f);
-		// update the actions map to have an array available
-		// for the incoming message objects from the workers
-		if (!this.actions.has(msgType)) {
-			this.actions.set(msgType, []);
-		}
-		// return the updated handlers map
-		return this.handlers;
-	  }
-	};
 
 	// There should never be more than
 	// one instance of `ParDom` in an app
