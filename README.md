@@ -1,5 +1,5 @@
 With ParDom you can
-===================
+-------------------
 
 * Create JavaScript apps that are super fast and light on the memory
 * Easily manage your code as it grows without compromising performance
@@ -9,10 +9,14 @@ With ParDom you can
 	* DRY (Don't Repeat Yourself) 
 	* YAGNI (You Aren't Gonna Need It).
 
-How does it do that ?
-=====================
+How does it help you do all that ?
+----------------------------------
 
 * ParDom serially processes batches of messages sent by WebWorkers ([or similar interfaces](https://github.com/audreyt/node-webworker-threads))
+* You run your code in its own threads
+* Separate and serialize IO in pardom (stuff like DOM reads/writes)
+* It uses requestAnimationFrame as the default timer function
+* Plays well with the "Performance" and "Debugger" tools present in modern browsers
 
 
 ParDom
@@ -22,7 +26,9 @@ A simple JavaScript message scheduler.
 
 
 
-OLD STUFF (REMOVE/REWRITE THIS, DON'T READ THIS IF YOU ARE NOT ME)
+
+
+OLD STUFF (DON'T READ THIS IF YOU ARE NOT ME)
 ===============================
 Serialzy Parallel DOM accesses.
 
