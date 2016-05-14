@@ -28,9 +28,14 @@ So whats the catch ?
 	* No Edge support (it might work though)
 * No sugar added, just plain JavaScript code
 
+Usage
+-----
+
+* Please check the 'examples' folder
+
 
 ParDom
 ======
 
-A simple JavaScript message scheduler.
+Just a simple JavaScript message scheduler.
 
