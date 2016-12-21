@@ -82,8 +82,12 @@
 			const worker = w;
 			this.workers.push(worker);
 			worker.onmessage = e => {
-				if (this.isValidMsg(e.data)) {
-					scheduleMessage(this, e.data, worker);
+				let msg = e.data;
+				if(typeof e.data === "string") {
+					msg = JSON.parse(e.data);
+				}
+				if (this.isValidMsg(msg)) {
+					scheduleMessage(this, msg, worker);
 				}
 			};
 			// post the initialization message to the worker

@@ -10,13 +10,13 @@ var w1 = new Worker(function () {
 });
 var w2 = new Worker(function() { 
 	this.onmessage = function(event) {
-		postMessage(event.data);
+		postMessage(JSON.stringify(event.data));
 		self.close();
   };
 });
 var w3 = new Worker(function() { 
 	this.onmessage = function(event) {
-		postMessage(event.data);
+		postMessage(JSON.stringify(event.data));
 		self.close();
   };
 });
@@ -103,7 +103,7 @@ describe('ParDom', function() {
 		it('sends a initialization message after worker is registered', function (done) {
 			var customMsg = 'CUSTOM INIT MSG';
 			w2.thread.once('message', function(msg) {
-				var expectedMsg = 'PARDOM';
+				var expectedMsg = JSON.stringify('PARDOM');
 				if(msg !== expectedMsg) {
 					console.log('>> ERROR IN WORKER w2: ', 
 						'Expected ' + expectedMsg + ' and got ' + msg);
@@ -112,13 +112,13 @@ describe('ParDom', function() {
 				var workersLst = pardom.registerWorker(w3, customMsg);
 			}.bind(this));
 			w3.thread.once('message', function(msg) {
-				var expectedMsg = customMsg
+				var expectedMsg = JSON.stringify(customMsg);
 				if(msg !== expectedMsg) {
 					console.log('>> ERROR IN WORKER w3: ', 
 						'Expected ' + expectedMsg + ' and got ' + msg);
 					expect(msg).toEqual(expectedMsg);
 				}
-				expect(msg).toEqual(customMsg);
+				expect(msg).toEqual(expectedMsg);
 				done();
 			}.bind(this));
 			var workers = pardom.registerWorker(w2);
