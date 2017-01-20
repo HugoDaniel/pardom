@@ -100,6 +100,17 @@ var w9 = new Worker(function() {
 		self.close();
   };
 });
+var w10 = new Worker(function() {
+	this.onmessage = function(event) {
+		var obj1 = { type: 'TYPE_E1_IMMEDIATE', action: 'A1' };
+		switch(event.data) {
+			case 'SCHEDULE1_IMMEDIATE':
+				postMessage(obj1);
+			break;
+		}
+		self.close();
+  };
+});
 
 // Tests start here
 describe('ParDom', function() {
@@ -231,6 +242,16 @@ describe('ParDom', function() {
 				done();
 				// ^ message got executed
 			}, { dontStack: true });
+		});
+		it.only('can execute an immediate single message', function (done) {
+			var runTestMsg = 'SCHEDULE1_IMMEDIATE';
+			var tmsg1 = 'TYPE_E1_IMMEDIATE';
+			var action1 = 'A1';
+			pardom.registerWorker(w10, runTestMsg);
+			pardom.registerMsg(tmsg1, action1, function(msg) {
+				done();
+				// ^ message got executed
+			}, { immediate: true });
 		});
 		it('can execute different messages of the same type', function (done) {
 			var runTestMsg = 'SCHEDULE2';

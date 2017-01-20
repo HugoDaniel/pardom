@@ -82,6 +82,11 @@
 			this.nonStackable = new Map();
 			// ^ the non stackable messages to handle in the frame
 			// this is a Map(type, Map(action, message object))
+			this.immediate = new Set();
+			// ^ Immediate actions dont get scheduled in the raf
+			// they skip the queueing and the nonStackable Map
+			// and get immediately executed
+			// this is a Set({ type, action });
 		}
 		isValidMsg(msg) {
 			const msgType = msg.type;
@@ -104,7 +109,12 @@
 					msg = JSON.parse(e.data);
 				}
 				if (this.isValidMsg(msg)) {
-					scheduleMessage(this, msg, worker);
+					if (this.immediate.has(msg.type + msg.action + "IMMEDIATE")) {
+						const f = this.handlers.get(msg.type).get(msg.action);
+						f(msg, this.workers);
+					} else {
+						scheduleMessage(this, msg, worker);
+					}
 				}
 			};
 			// post the initialization message to the worker
@@ -124,7 +134,8 @@
 			^ if true then only the last of these messages will be executed
 			}
 		*/
-		registerMsg(msgType, action, f, flags) {
+		registerMsg(msgType, action, f, _flags) {
+			const flags = _flags || { dontStack: false, immediate: false };
 			if (!msgType || !action || !f) return this.handlers;
 			// initialize the handler object for this type of messages
 			if (!this.handlers.has(msgType)) {
@@ -132,7 +143,7 @@
 			}
 			// set the function as the handler for this message
 			this.handlers.get(msgType).set(action, f);
-			if (flags && flags.dontStack) {
+			if (flags.dontStack) {
 				if (!this.nonStackable.has(msgType)) {
 					const m = new Map();
 					m.set(action, null)
@@ -140,6 +151,8 @@
 				} else {
 					this.nonStackable.get(msgType).set(action, null);
 				}
+			} else if(flags.immediate) {
+				this.immediate.add(msgType + action + "IMMEDIATE");
 			} else {
 				// update the actions map to have an array available
 				// for the incoming message objects from the workers
