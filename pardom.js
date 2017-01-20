@@ -23,8 +23,14 @@
 		}
 		// set the origin worker (this can be used if a response is needed)
 		msg.w = w;
-		// push the message into the queue to be processed
-		pardom.actions.get(msg.type).push(msg);
+		// push the message into the nonStackable map or the queue
+		// to be later processed in the frame
+		const nonStackable = pardom.nonStackable.get(msg.type);
+		if (nonStackable && nonStackable.has(msg.action)) {
+			nonStackable.set(msg.action, msg);
+		} else {
+			pardom.actions.get(msg.type).push(msg);
+		}
 		// the frame() function gets called in rAF to handle the scheduled msgs
 		if (isFrameNeeded) {
 			(function frameIIFE() {
@@ -36,10 +42,18 @@
 					if (pardom.scheduled.length > 0) {
 						timer(frame);
 					}
+					const functions = pardom.handlers.get(msgType);
+					// non-stackable messages execution
+					if (pardom.nonStackable.has(msgType)) {
+						pardom.nonStackable.get(msgType).forEach(
+							function(value, key) {
+								functions.get(key)(value, pardom.workers);
+							}
+						);
+					}
 					// get the list of actions scheduled
 					// and the functions that are mapped to them
 					const msgLst = pardom.actions.get(msgType);
-					const functions = pardom.handlers.get(msgType);
 					// execute each of them
 					do {
 						const curMsg = msgLst.shift();
@@ -65,6 +79,9 @@
 			this.actions = new Map();
 			// ^ the messages to handle in the frame
 			// this is a Map(msgType, [message object])
+			this.nonStackable = new Map();
+			// ^ the non stackable messages to handle in the frame
+			// this is a Map(type, Map(action, message object))
 		}
 		isValidMsg(msg) {
 			const msgType = msg.type;
@@ -97,7 +114,17 @@
 			// return all registered workers
 			return this.workers;
 		}
-		registerMsg(msgType, action, f) {
+		/*
+		in registerMsg the flags specify special behaviour
+		this arg can be null or an object with 
+		the following properties:
+			{ immediate
+			^ if true then this msg is executed immediately skipping the raf
+			, dontStack
+			^ if true then only the last of these messages will be executed
+			}
+		*/
+		registerMsg(msgType, action, f, flags) {
 			if (!msgType || !action || !f) return this.handlers;
 			// initialize the handler object for this type of messages
 			if (!this.handlers.has(msgType)) {
@@ -105,10 +132,20 @@
 			}
 			// set the function as the handler for this message
 			this.handlers.get(msgType).set(action, f);
-			// update the actions map to have an array available
-			// for the incoming message objects from the workers
-			if (!this.actions.has(msgType)) {
-				this.actions.set(msgType, []);
+			if (flags && flags.dontStack) {
+				if (!this.nonStackable.has(msgType)) {
+					const m = new Map();
+					m.set(action, null)
+					this.nonStackable.set(msgType, m);
+				} else {
+					this.nonStackable.get(msgType).set(action, null);
+				}
+			} else {
+				// update the actions map to have an array available
+				// for the incoming message objects from the workers
+				if (!this.actions.has(msgType)) {
+					this.actions.set(msgType, []);
+				}
 			}
 			// return the updated handlers map
 			return this.handlers;

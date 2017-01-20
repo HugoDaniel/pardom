@@ -72,6 +72,17 @@ var w7 = new Worker(function() {
   };
 });
 
+var w8 = new Worker(function() {
+	this.onmessage = function(event) {
+		var obj1 = { type: 'TYPE_E1_NONSTACK', action: 'A1' };
+		switch(event.data) {
+			case 'SCHEDULE1_NONSTACK':
+				postMessage(obj1);
+			break;
+		}
+		self.close();
+  };
+});
 var w9 = new Worker(function() {
 	this.onmessage = function(event) {
 		var a = { type: 'TYPE_O3', action: 'A' };
@@ -211,7 +222,16 @@ describe('ParDom', function() {
 				// ^ message got executed
 			});
 		});
-
+		it('can execute a non-stackable single message', function (done) {
+			var runTestMsg = 'SCHEDULE1_NONSTACK';
+			var tmsg1 = 'TYPE_E1_NONSTACK';
+			var action1 = 'A1';
+			pardom.registerWorker(w8, runTestMsg);
+			pardom.registerMsg(tmsg1, action1, function(msg) {
+				done();
+				// ^ message got executed
+			}, { dontStack: true });
+		});
 		it('can execute different messages of the same type', function (done) {
 			var runTestMsg = 'SCHEDULE2';
 			var tmsg = 'TYPE_E2';
