@@ -47,7 +47,9 @@
 					if (pardom.nonStackable.has(msgType)) {
 						pardom.nonStackable.get(msgType).forEach(
 							function(value, key) {
-								functions.get(key)(value, pardom.workers);
+								if (value) {
+									functions.get(key)(value, pardom.workers);
+								}
 							}
 						);
 					}
@@ -55,13 +57,13 @@
 					// and the functions that are mapped to them
 					const msgLst = pardom.actions.get(msgType);
 					// execute each of them
-					do {
+					while (msgLst.length > 0) {
 						const curMsg = msgLst.shift();
 						// get the function handler and call it
 						const f = functions.get(curMsg.action);
 						f(curMsg, pardom.workers);
 						// ^ your code runs here
-					} while (msgLst.length > 0);
+					}
 				}
 				timer(frame); // schedule it
 			})();
