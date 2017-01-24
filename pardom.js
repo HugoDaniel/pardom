@@ -111,9 +111,8 @@
 					msg = JSON.parse(e.data);
 				}
 				if (this.isValidMsg(msg)) {
-					if (this.immediate.has(msg.type + msg.action + "IMMEDIATE")) {
-						const f = this.handlers.get(msg.type).get(msg.action);
-						f(msg, this.workers);
+					if (this.immediate.has(`${msg.type}${msg.action}IMMEDIATE`)) {
+						this.handlers.get(msg.type).get(msg.action)(msg, this.workers);
 					} else {
 						scheduleMessage(this, msg, worker);
 					}
