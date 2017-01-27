@@ -100,24 +100,29 @@
 				hasAction && handler && handler.get(msgAction));
 			return isValid;
 		}
-		registerWorker(w, initMsg) {
+		registerWorker(w, initMsg, handler) {
 			if (!w) return this.workers;
 			// ^ assert that the worker exists
 			const worker = w;
 			this.workers.push(worker);
-			worker.onmessage = e => {
-				let msg = e.data;
-				if(typeof e.data === "string") {
-					msg = JSON.parse(e.data);
-				}
-				if (this.isValidMsg(msg)) {
-					if (this.immediate.has(`${msg.type}${msg.action}IMMEDIATE`)) {
-						this.handlers.get(msg.type).get(msg.action)(msg, this.workers);
-					} else {
-						scheduleMessage(this, msg, worker);
+			if (typeof handler === "function") {
+				const handlerF = handler.bind(this);
+				worker.onmessage = handlerF;
+			} else {
+				worker.onmessage = e => {
+					let msg = e.data;
+					if(typeof e.data === "string") {
+						msg = JSON.parse(e.data);
 					}
-				}
-			};
+					if (this.isValidMsg(msg)) {
+						if (this.immediate.has(`${msg.type}${msg.action}IMMEDIATE`)) {
+							this.handlers.get(msg.type).get(msg.action)(msg, this.workers);
+						} else {
+							scheduleMessage(this, msg, worker);
+						}
+					}
+				};
+			}
 			// post the initialization message to the worker
 			let msg = initMsg;
 			if (!msg) msg = 'PARDOM';
